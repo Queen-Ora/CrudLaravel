@@ -34,6 +34,14 @@
                                     <div class="alert alert-danger">{{ $message }}</div>
                                 @enderror
                             </div>
+                            <div class="mb-3">
+                                <label for="title">Mot de passe</label>
+                                <input type="text" name="password" class="form-control" id="password"
+                                    value="" placeholder="Entrer le nouveau mot de passe">
+                                @error('title')
+                                    <div class="alert alert-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
                      
                         
 

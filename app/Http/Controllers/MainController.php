@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\AccountMail;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 
@@ -37,13 +38,16 @@ class MainController extends Controller
 
             return redirect()->route('welcome');
         }else{
-            // return redirect()->route('welcome');
-            return 'non';
+            
+            return back()->with('error', 'Identifiant ou mot de passe incorrect !');
         }
     }
     public function home()
     {
-        $data = User::where('email', '!=', 'safayomepro@gmail.com')->get();
+        // $data = User::where('email', '!=', 'safayomepro@gmail.com')->get();
+        $data = User::where('is_admin', '!=', '1')
+        ->orderBy('created_at', 'desc')
+        ->get();
         return view('admin.admin',[
             'users' => $data,
         ]
@@ -51,7 +55,8 @@ class MainController extends Controller
     }
     public function addUser(Request $request)
     {
-        $user = new User();
+        try {
+            $user = new User();
         $user->name = $request->name;
         $user->email = $request->email;
         $user->password = Hash::make($request->password);
@@ -59,6 +64,10 @@ class MainController extends Controller
         $user->save();
         Mail::to($request->email)->send(new AccountMail($request->password));
         return redirect()->back()->with('success', 'Utilisateur ajouté');
+        } catch(Exception $e) {
+            return back()->with('error', 'Une erreur est survenue veillez vérifier les informations entrer');
+        }
+
     }
     public function editUser()
     {
@@ -106,11 +115,17 @@ class MainController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $user = User::find($id);
+        if (!empty($user->email)) {
+            $user = User::find($id);
         $user->name = $request->name;
+        $user->password = Hash::make($request->password);
         $user->update();
+        Mail::to($user->email)->send(new AccountMail($request->password));
 
         return redirect()->route('welcome')->with('success', 'Utilisateur mis à jour avec succès');
+        } else {
+            return back()->with('error', "L'adresse email de l'utilisateur est manquante.");
+        }
     }
 
     /**
